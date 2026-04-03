@@ -1,0 +1,9 @@
+-- ====================================
+-- .gitignore
+-- Copy isi file ini ke repository kamu
+-- ====================================
+
+node_modules/
+.env
+.DS_Store
+*.log
