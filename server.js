@@ -1,8 +1,3 @@
--- ====================================
--- server.js
--- Copy isi file ini ke repository kamu
--- ====================================
-
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
