@@ -5,17 +5,15 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS for Roblox
 app.use(cors({
     origin: ['https://www.roblox.com', 'https://web.roblox.com', 'https://create.roblox.com'],
     methods: ['GET'],
     credentials: true
 }));
 
-// Rate limiting (simple)
 const rateLimit = {};
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const RATE_LIMIT_MAX = 100; // 100 requests per minute per IP
+const RATE_LIMIT_WINDOW = 60000;
+const RATE_LIMIT_MAX = 100;
 
 function checkRateLimit(req, res, next) {
     const ip = req.ip || req.connection.remoteAddress;
@@ -36,7 +34,6 @@ function checkRateLimit(req, res, next) {
 
 app.use(checkRateLimit);
 
-// Health check
 app.get('/', (req, res) => {
     res.json({ 
         status: 'online', 
@@ -45,12 +42,10 @@ app.get('/', (req, res) => {
     });
 });
 
-// Get follower count
 app.get('/followers/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         
-        // Validate userId
         if (!userId || isNaN(userId)) {
             return res.status(400).json({ error: 'Invalid userId' });
         }
@@ -70,12 +65,10 @@ app.get('/followers/:userId', async (req, res) => {
     }
 });
 
-// Get primary group
 app.get('/group/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         
-        // Validate userId
         if (!userId || isNaN(userId)) {
             return res.status(400).json({ error: 'Invalid userId' });
         }
@@ -88,16 +81,32 @@ app.get('/group/:userId', async (req, res) => {
         
         const data = await response.json();
         
-        // Find primary group (first one in the list)
-        if (data && data.data && data.data.length > 0) {
-            const primaryGroup = data.data[0];
+        // Find PRIMARY group (isPrimaryGroup: true)
+        let primaryGroup = null;
+        
+        if (data && data.data && Array.isArray(data.data)) {
+            for (const groupRole of data.data) {
+                if (groupRole.isPrimaryGroup === true) {
+                    primaryGroup = groupRole;
+                    break;
+                }
+            }
+        }
+        
+        if (primaryGroup) {
             res.json({
                 groupId: primaryGroup.group?.id,
                 groupName: primaryGroup.group?.name,
-                role: primaryGroup.role?.name
+                role: primaryGroup.role?.name,
+                isPrimary: true
             });
         } else {
-            res.json({ groupId: null, groupName: null, role: null });
+            res.json({ 
+                groupId: null, 
+                groupName: null, 
+                role: null,
+                isPrimary: false
+            });
         }
         
     } catch (error) {
@@ -106,7 +115,6 @@ app.get('/group/:userId', async (req, res) => {
     }
 });
 
-// Start server
 app.listen(PORT, () => {
     console.log(`Proxy server running on port ${PORT}`);
 });
